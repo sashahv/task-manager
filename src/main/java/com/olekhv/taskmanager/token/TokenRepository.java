@@ -11,8 +11,7 @@ import java.util.Optional;
 public interface TokenRepository extends JpaRepository<Token, Long> {
     @Query (value = "SELECT t " +
             "FROM Token t " +
-            "INNER " +
-            "JOIN User u " +
+            "INNER JOIN User u " +
             "ON t.user.id=u.id " +
             "WHERE u.id=?1 and (t.expired = false or t.revoked = false)"
     )

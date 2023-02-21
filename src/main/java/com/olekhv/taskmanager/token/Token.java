@@ -14,12 +14,13 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Token {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true)
     private String token;
 
+    @Enumerated(EnumType.STRING)
     private TokenType tokenType = TokenType.BEARER;
 
     private boolean revoked;

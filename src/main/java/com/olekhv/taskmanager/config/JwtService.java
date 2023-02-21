@@ -19,13 +19,13 @@ import java.util.function.Function;
 @Slf4j
 public class JwtService {
 
-    private static final String SECRET_KEY = "792F423F4528482B4D6251655368566D597133743677397A24432646294A404E";
+    private static final String SECRET_KEY = "4D635166546A576E5A7234753778214125442A472D4B6150645267556B587032";
 
     public String extractUsername(String token) {
-        return extractClaims(token, Claims::getSubject);
+        return extractClaim(token, Claims::getSubject);
     }
 
-    public <T> T extractClaims(String token, Function<Claims, T> claimsResolver){
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver){
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
@@ -55,12 +55,12 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64URL.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(userDetails.getUsername());
+        final String username = extractUsername(token);
         return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
@@ -69,6 +69,6 @@ public class JwtService {
     }
 
     private Date extractExpiration(String token) {
-        return extractClaims(token, Claims::getExpiration);
+        return extractClaim(token, Claims::getExpiration);
     }
 }
