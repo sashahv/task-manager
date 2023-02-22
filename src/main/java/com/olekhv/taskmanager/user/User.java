@@ -1,5 +1,6 @@
 package com.olekhv.taskmanager.user;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.olekhv.taskmanager.task.Task;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -34,6 +35,7 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @JsonBackReference
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "owner", orphanRemoval = true)
     private List<Task> tasks;
 

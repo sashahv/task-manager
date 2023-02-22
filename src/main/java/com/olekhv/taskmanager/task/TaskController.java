@@ -1,15 +1,18 @@
 package com.olekhv.taskmanager.task;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/task")
+@RequestMapping("/api/v1/tasks")
 public class TaskController {
 
     private final TaskService taskService;
@@ -36,5 +39,10 @@ public class TaskController {
                                              @AuthenticationPrincipal UserDetails userDetails){
         taskService.deleteTask(id, userDetails.getUsername());
         return ResponseEntity.ok("Task was deleted successfully");
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Task>> listAllTasks(@AuthenticationPrincipal UserDetails userDetails){
+        return ResponseEntity.ok(taskService.listAllTasks(userDetails.getUsername()));
     }
 }

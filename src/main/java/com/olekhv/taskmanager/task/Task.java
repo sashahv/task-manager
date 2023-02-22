@@ -1,19 +1,15 @@
 package com.olekhv.taskmanager.task;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.olekhv.taskmanager.user.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -31,7 +27,6 @@ public class Task {
     private TaskPriority priority;
     @Enumerated(EnumType.STRING)
     private TaskProgress progress;
-
     @ManyToOne
     private User owner;
 }

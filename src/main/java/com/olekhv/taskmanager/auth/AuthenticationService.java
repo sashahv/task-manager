@@ -10,6 +10,7 @@ import com.olekhv.taskmanager.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,12 +51,16 @@ public class AuthenticationService {
 
     public AuthenticationResponse login(LoginRequest request) {
         String email = request.getEmail();
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        email,
-                        request.getPassword()
-                )
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            email,
+                            request.getPassword()
+                    )
+            );
+        } catch (BadCredentialsException e) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
         User user = userRepository.findByEmail(email)
                 .orElseThrow(
                         () -> new UsernameNotFoundException("User with email: " + " does not exists")

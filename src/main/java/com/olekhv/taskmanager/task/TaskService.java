@@ -1,6 +1,8 @@
 package com.olekhv.taskmanager.task;
 
+import com.olekhv.taskmanager.exception.NoPermissionException;
 import com.olekhv.taskmanager.exception.TaskNotFoundException;
+import com.olekhv.taskmanager.user.Role;
 import com.olekhv.taskmanager.user.User;
 import com.olekhv.taskmanager.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +11,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -20,14 +25,14 @@ public class TaskService {
     private final UserRepository userRepository;
 
     public void addTaskForSingleUser(String username,
-                                     Task task){
+                                     Task task) {
         User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User not found")
+                () -> new UsernameNotFoundException("User " + username + " not found")
         );
 
         task.setOwner(user);
 
-        List<Task> tasks = user.getTasks()!=null ? user.getTasks() : new ArrayList<>();
+        List<Task> tasks = user.getTasks() != null ? user.getTasks() : new ArrayList<>();
         tasks.add(task);
         user.setTasks(tasks);
 
@@ -35,12 +40,18 @@ public class TaskService {
         userRepository.save(user);
     }
 
-    public void editTask(Long taskId, Task editedTask, String username){
+    public void editTask(Long taskId, Task editedTask, String username) {
         Task task = taskRepository.findById(taskId).orElseThrow(
                 () -> new TaskNotFoundException("Task not found")
         );
 
-        checkWhetherTaskBelongsToUser(task, username);
+        User user = userRepository.findByEmail(username).orElseThrow(
+                () -> new UsernameNotFoundException("User " + username + " not found")
+        );
+
+        if (!user.equals(task.getOwner()) && !user.getRole().equals(Role.ADMIN)) {
+            throw new TaskNotFoundException("Task not found");
+        }
 
         task.setName(editedTask.getName());
         task.setDescription(editedTask.getDescription());
@@ -53,16 +64,18 @@ public class TaskService {
         taskRepository.save(task);
     }
 
-    public void deleteTask(Long taskId, String username){
+    public void deleteTask(Long taskId, String username) {
         Task task = taskRepository.findById(taskId).orElseThrow(
                 () -> new TaskNotFoundException("Task not found")
         );
 
         User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User not found")
+                () -> new UsernameNotFoundException("User " + username + " not found")
         );
 
-        checkWhetherTaskBelongsToUser(task, username);
+        if (!user.equals(task.getOwner()) && !user.getRole().equals(Role.ADMIN)) {
+            throw new TaskNotFoundException("Task not found");
+        }
 
         List<Task> tasks = user.getTasks();
         tasks.remove(task);
@@ -71,13 +84,53 @@ public class TaskService {
         userRepository.save(user);
     }
 
-    private void checkWhetherTaskBelongsToUser(Task task, String username) {
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User not found")
+    /* Allow admin to list all tasks
+    of the specific user */
+    public List<Task> listTasksOfUser(String username, String adminEmail) {
+        User admin = userRepository.findByEmail(adminEmail).orElseThrow(
+                () -> new UsernameNotFoundException("User " + adminEmail + " not found")
         );
 
-        if(!user.equals(task.getOwner())){
-            throw new RuntimeException("Task not found");
+        User user = userRepository.findByEmail(username).orElseThrow(
+                () -> new UsernameNotFoundException("User " + username + " not found")
+        );
+
+        if (!admin.getRole().equals(Role.ADMIN)) {
+            throw new NoPermissionException("No permission");
         }
+
+        List<Task> tasks = user.getTasks();
+        sortListOfTasks(tasks);
+
+        return tasks;
+    }
+
+    /* Allow users to watch all their tasks
+    and admin to watch all existing tasks*/
+    public List<Task> listAllTasks(String username) {
+        User user = userRepository.findByEmail(username).orElseThrow(
+                () -> new UsernameNotFoundException("User " + username + " not found")
+        );
+
+        List<Task> tasks;
+        if (user.getRole().equals(Role.ADMIN)) {
+            tasks = taskRepository.findAll();
+        } else {
+            tasks = user.getTasks();
+            sortListOfTasks(tasks);
+        }
+
+        return tasks;
+    }
+
+    private void sortListOfTasks(List<Task> tasks) {
+        tasks.sort(Comparator.comparing(
+                        Task::getPriority).reversed()
+                .thenComparing(
+                        Task::getToDateTime).reversed()
+                .thenComparing(
+                        Task::getFromDateTime).reversed()
+                .thenComparing(
+                        Task::getProgress));
     }
 }
