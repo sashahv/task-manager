@@ -5,6 +5,7 @@ import com.olekhv.taskmanager.user.Role;
 import com.olekhv.taskmanager.user.User;
 import com.olekhv.taskmanager.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,8 +36,8 @@ class TaskServiceTest {
     @BeforeEach
     void setUp(){
         user = User.builder()
-                .firstName("Oleksandr")
-                .lastName("Hvozditskyi")
+                .firstName("Test")
+                .lastName("User")
                 .email("testUser@gmail.com")
                 .role(Role.USER)
                 .build();
@@ -52,7 +53,8 @@ class TaskServiceTest {
     }
 
     @Test
-    void should_add_task_to_user_and_check_whether_size_of_tasks_in_user_increased(){
+    @DisplayName("Add task for user")
+    void should_add_task_for_user_and_check_whether_size_of_tasks_of_user_increased(){
         taskService.addTaskForSingleUser(Objects.requireNonNull(user).getEmail(), task);
 
         verify(taskRepository, times(1)).save(task);
@@ -105,8 +107,8 @@ class TaskServiceTest {
                 .build();
 
         User admin = User.builder()
-                .firstName("Jan")
-                .lastName("Kowalski")
+                .firstName("Test")
+                .lastName("Admin")
                 .email("testAdmin@gmail.com")
                 .role(Role.ADMIN)
                 .build();
@@ -127,8 +129,8 @@ class TaskServiceTest {
     @Test
     void should_list_tasks_of_certain_user_if_role_admin(){
         User admin = User.builder()
-                .firstName("Jan")
-                .lastName("Kowalski")
+                .firstName("Test")
+                .lastName("Admin")
                 .email("testAdmin@gmail.com")
                 .role(Role.ADMIN)
                 .build();
@@ -143,6 +145,7 @@ class TaskServiceTest {
     }
 
     @Test
+    @DisplayName("Throw exception when try to list other user's tasks")
     void should_throw_exception_when_list_tasks_of_other_user_without_admin_role(){
         assertThrows(NoPermissionException.class, () ->
                 taskService.listTasksOfUser(user.getEmail(), user.getEmail())

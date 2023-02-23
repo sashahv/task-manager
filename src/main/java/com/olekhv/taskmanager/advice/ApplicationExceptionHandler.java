@@ -3,9 +3,11 @@ package com.olekhv.taskmanager.advice;
 import com.olekhv.taskmanager.exception.NoPermissionException;
 import com.olekhv.taskmanager.exception.TaskNotFoundException;
 import com.olekhv.taskmanager.exception.TokenNotFoundException;
-import io.jsonwebtoken.security.SignatureException;
+import com.olekhv.taskmanager.exception.UserAlreadyExistsException;
+import jakarta.persistence.NonUniqueResultException;
 import jakarta.servlet.ServletException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -13,6 +15,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApplicationExceptionHandler {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(NonUniqueResultException.class)
+    public String handleNonUniqueResultException(NonUniqueResultException ex){
+        return ex.getMessage();
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public String handleUserAlreadyExistsException(UserAlreadyExistsException ex){
+        return ex.getMessage();
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public String handleHttpMessageNotReadableException(HttpMessageNotReadableException ex){
+        return ex.getMessage();
+    }
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(IllegalArgumentException.class)
     public String handleIllegalArgumentException(IllegalArgumentException ex){

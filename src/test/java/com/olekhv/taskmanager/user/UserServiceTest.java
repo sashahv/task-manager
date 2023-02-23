@@ -32,15 +32,15 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         user = User.builder()
-                .firstName("Oleksandr")
-                .lastName("Hvozditskyi")
+                .firstName("Test")
+                .lastName("User")
                 .email("testUser@gmail.com")
                 .role(Role.USER)
                 .build();
 
         admin = User.builder()
-                .firstName("Jan")
-                .lastName("Kowalski")
+                .firstName("Test")
+                .lastName("Admin")
                 .email("testAdmin@gmail.com")
                 .role(Role.ADMIN)
                 .build();
@@ -67,12 +67,12 @@ class UserServiceTest {
 
     @Test
     void should_change_user_information(){
-        userService.editUserInformation("Edytowany", "Użytkownik", user.getEmail());
+        userService.editUserInformation("Edited", "User", user.getEmail());
 
         verify(userRepository, times(1)).save(user);
 
-        assertEquals("Edytowany", user.getFirstName());
-        assertEquals("Użytkownik", user.getLastName());
+        assertEquals("Edited", user.getFirstName());
+        assertEquals("User", user.getLastName());
     }
 
     @Test

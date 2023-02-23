@@ -26,9 +26,7 @@ public class TaskService {
 
     public void addTaskForSingleUser(String username,
                                      Task task) {
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User " + username + " not found")
-        );
+        User user = userRepository.findByEmail(username).get();
 
         task.setOwner(user);
 
@@ -45,9 +43,7 @@ public class TaskService {
                 () -> new TaskNotFoundException("Task not found")
         );
 
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User " + username + " not found")
-        );
+        User user = userRepository.findByEmail(username).get();
 
         if (!user.equals(task.getOwner()) && !user.getRole().equals(Role.ADMIN)) {
             throw new TaskNotFoundException("Task not found");
@@ -69,9 +65,7 @@ public class TaskService {
                 () -> new TaskNotFoundException("Task not found")
         );
 
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User " + username + " not found")
-        );
+        User user = userRepository.findByEmail(username).get();
 
         if (!user.equals(task.getOwner()) && !user.getRole().equals(Role.ADMIN)) {
             throw new TaskNotFoundException("Task not found");
@@ -87,9 +81,7 @@ public class TaskService {
     /* Allow admin to list all tasks
     of the specific user */
     public List<Task> listTasksOfUser(String username, String adminEmail) {
-        User admin = userRepository.findByEmail(adminEmail).orElseThrow(
-                () -> new UsernameNotFoundException("User " + adminEmail + " not found")
-        );
+        User admin = userRepository.findByEmail(adminEmail).get();
 
         User user = userRepository.findByEmail(username).orElseThrow(
                 () -> new UsernameNotFoundException("User " + username + " not found")
@@ -108,9 +100,7 @@ public class TaskService {
     /* Allow users to watch all their tasks
     and admin to watch all existing tasks*/
     public List<Task> listAllTasks(String username) {
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User " + username + " not found")
-        );
+        User user = userRepository.findByEmail(username).get();
 
         List<Task> tasks;
         if (user.getRole().equals(Role.ADMIN)) {

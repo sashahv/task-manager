@@ -2,6 +2,7 @@ package com.olekhv.taskmanager.user;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.olekhv.taskmanager.task.Task;
+import com.olekhv.taskmanager.team.Team;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,6 +28,7 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     private Long id;
+
     private String firstName;
     private String lastName;
     private String email;
@@ -38,6 +40,14 @@ public class User implements UserDetails {
     @JsonBackReference
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "owner", orphanRemoval = true)
     private List<Task> tasks;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
