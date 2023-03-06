@@ -16,11 +16,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class ApplicationExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(RuntimeException.class)
+    public String handleRuntimeException(RuntimeException ex){
+        return ex.getMessage();
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(NonUniqueResultException.class)
     public String handleNonUniqueResultException(NonUniqueResultException ex){
         return ex.getMessage();
     }
-
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(UserAlreadyExistsException.class)
     public String handleUserAlreadyExistsException(UserAlreadyExistsException ex){

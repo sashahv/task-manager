@@ -13,13 +13,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    public User fetchUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("User " + email + " not found")
+        );
+    }
+
     public void editUserInformation(String newFirstName,
                                     String newLastName,
-                                    String username){
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User " + username + " not found")
-        );
-
+                                    String email) {
+        User user = fetchUserByEmail(email);
         user.setFirstName(newFirstName);
         user.setLastName(newLastName);
 
@@ -29,16 +32,19 @@ public class UserService {
     public void changeUserPassword(String oldPassword,
                                    String newPassword,
                                    String confirmedPassword,
-                                   String username){
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User " + username + " not found")
-        );
+                                   String email) {
+        User user = fetchUserByEmail(email);
 
-        if(!isOldPasswordCorrect(oldPassword, user.getPassword())){
-            throw new IllegalArgumentException("Old password is incorrect");
+        if (!oldPassword.equals(user.getPassword())) {
+            /* !oldPassword.equals(user.getPassword()) is used
+            for password recovery, where old password is set as user.getPassword()*/
+
+            if (!isOldPasswordCorrect(user.getPassword(), oldPassword)) {
+                throw new IllegalArgumentException("Old password is incorrect");
+            }
         }
 
-        if(!isVerifiedNewPassword(newPassword, confirmedPassword)){
+        if (!isVerifiedNewPassword(newPassword, confirmedPassword)) {
             throw new IllegalArgumentException("New password is not confirmed");
         }
 
@@ -47,8 +53,8 @@ public class UserService {
         userRepository.save(user);
     }
 
-    private boolean isVerifiedNewPassword(String newPassword,
-                                          String confirmedPassword) {
+    public boolean isVerifiedNewPassword(String newPassword,
+                                         String confirmedPassword) {
         return newPassword.equals(confirmedPassword);
     }
 
@@ -56,16 +62,14 @@ public class UserService {
         return passwordEncoder.matches(oldPassword, password);
     }
 
-    public void changeUserRole(Role role, String username, String adminEmail){
+    public void changeUserRole(Role role, String email, String adminEmail) {
+        User user = fetchUserByEmail(email);
+
         User admin = userRepository.findByEmail(adminEmail).orElseThrow(
                 () -> new UsernameNotFoundException("User " + adminEmail + " not found")
         );
 
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User " + username + " not found")
-        );
-
-        if(!admin.getRole().equals(Role.ADMIN)){
+        if (!admin.getRole().equals(Role.ADMIN)) {
             throw new NoPermissionException("No permission");
         }
 

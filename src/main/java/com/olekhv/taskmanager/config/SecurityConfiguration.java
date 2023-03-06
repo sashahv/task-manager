@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.logout.LogoutHandler;
 public class SecurityConfiguration {
 
     private static final String[] WHITE_LIST = {
+            "/api/v1/users/password/**",
             "/api/v1/auth/**"
     };
 

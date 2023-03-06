@@ -66,7 +66,7 @@ class UserServiceTest {
     }
 
     @Test
-    void should_change_user_information(){
+    void should_change_user_information() {
         userService.editUserInformation("Edited", "User", user.getEmail());
 
         verify(userRepository, times(1)).save(user);
@@ -76,14 +76,16 @@ class UserServiceTest {
     }
 
     @Test
-    void should_change_password(){
+    void should_change_password() {
         String newPassword = "newPassword";
 
         when(passwordEncoder.matches("oldPassword", user.getPassword())).thenReturn(true);
         when(passwordEncoder.encode(anyString())).thenReturn(newPassword);
 
-        userService.changeUserPassword(
-                "oldPassword", newPassword, newPassword, user.getEmail()
+        userService.changeUserPassword("oldPassword",
+                newPassword,
+                newPassword,
+                user.getEmail()
         );
 
         verify(userRepository, times(1)).save(user);
@@ -92,20 +94,26 @@ class UserServiceTest {
     }
 
     @Test
-    void should_throw_exception_if_old_password_is_not_confirmed(){
+    void should_throw_exception_if_old_password_is_not_confirmed() {
         when(passwordEncoder.matches("oldPassword", user.getPassword())).thenReturn(false);
 
         assertThrows(IllegalArgumentException.class, () ->
-                userService.changeUserPassword(
-                        "oldPassword", "12345", "12345", user.getEmail()
-        ));
+                userService.changeUserPassword("oldPassword",
+                        "12345",
+                        "12345",
+                        user.getEmail()
+                )
+        );
     }
 
     @Test
-    void should_throw_exception_if_new_password_is_not_confirmed(){
+    void should_throw_exception_if_new_password_is_not_confirmed() {
         assertThrows(IllegalArgumentException.class, () ->
                 userService.changeUserPassword(
-                        "oldPassword", "newPassword", "editedNewPassword", user.getEmail()
+                        "oldPassword",
+                        "newPassword",
+                        "editedNewPassword",
+                        user.getEmail()
                 )
         );
     }
