@@ -50,5 +50,5 @@ To run the Task Manager application, follow these steps:
 4. Start the application using `mvn spring-boot:run`.
 5. The application will be available at `http://localhost:8080`.
 
-## Credits
+## Contact Information
 If you have any questions or issues with the project, please feel free to reach out to the developer at s.hvozditskyi@gmail.com.
