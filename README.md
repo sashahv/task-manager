@@ -31,7 +31,7 @@ Once a user is logged in, they can perform the following actions related to task
 - Create a new task: Users can create a new task by providing a task name, description, and deadline. If the task is not completed by the deadline, the progress of the task will automatically change to "OVERDUE".
 - Edit a task: Users can edit a task by updating its name, description, and deadline.
 - Delete a task: Users can delete a task. When a task is deleted, the progress of the task will be set to "CLOSED".
-- Change progress: Users can change the progress of a task to "NOT STARTED", "IN PROGRESS", or "COMPLETED".
+- Change progress: Users can change the progress of a task to "TODO",  "PLANNING", "IN_PROCESS" and "FINISHED";
 - List all tasks: Users can list all the tasks they have created and sort them by deadline, progress, or name.
 
 ### Team Management
