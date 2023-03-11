@@ -42,7 +42,7 @@ class UserServiceTest {
                 .firstName("Test")
                 .lastName("Admin")
                 .email("testAdmin@gmail.com")
-                .role(Role.ADMIN)
+                .role(Role.SUPPORT)
                 .build();
 
         when(userRepository.findByEmail("testUser@gmail.com")).thenReturn(Optional.of(user));
@@ -51,17 +51,17 @@ class UserServiceTest {
 
     @Test
     void should_change_role_of_user_if_admin_account() {
-        userService.changeUserRole(Role.ADMIN, user.getEmail(), admin.getEmail());
+        userService.changeUserRole(Role.SUPPORT, user.getEmail(), admin.getEmail());
 
         verify(userRepository, times(1)).save(user);
 
-        assertEquals(Role.ADMIN, user.getRole());
+        assertEquals(Role.SUPPORT, user.getRole());
     }
 
     @Test
     void should_throw_exception_if_account_that_change_role_is_not_admin() {
         assertThrows(NoPermissionException.class, () ->
-                userService.changeUserRole(Role.ADMIN, user.getEmail(), user.getEmail())
+                userService.changeUserRole(Role.SUPPORT, user.getEmail(), user.getEmail())
         );
     }
 

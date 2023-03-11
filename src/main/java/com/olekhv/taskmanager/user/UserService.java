@@ -59,7 +59,7 @@ public class UserService {
     }
 
     private boolean isOldPasswordCorrect(String oldPassword, String password) {
-        return passwordEncoder.matches(oldPassword, password);
+        return passwordEncoder.matches(password, oldPassword);
     }
 
     public void changeUserRole(Role role, String email, String adminEmail) {
@@ -69,7 +69,7 @@ public class UserService {
                 () -> new UsernameNotFoundException("User " + adminEmail + " not found")
         );
 
-        if (!admin.getRole().equals(Role.ADMIN)) {
+        if (!admin.getRole().equals(Role.SUPPORT)) {
             throw new NoPermissionException("No permission");
         }
 

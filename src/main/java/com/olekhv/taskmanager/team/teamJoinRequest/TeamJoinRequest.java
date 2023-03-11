@@ -19,7 +19,7 @@ public class TeamJoinRequest {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     private User user;
 
     @ManyToOne

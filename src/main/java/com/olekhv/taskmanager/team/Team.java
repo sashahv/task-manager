@@ -1,5 +1,6 @@
 package com.olekhv.taskmanager.team;
 
+import com.olekhv.taskmanager.task.Task;
 import com.olekhv.taskmanager.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,9 @@ public class Team {
     @Enumerated(EnumType.STRING)
     private TeamType type;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     private List<User> members = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Task> tasks = new ArrayList<>();
 }

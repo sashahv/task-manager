@@ -1,7 +1,10 @@
 package com.olekhv.taskmanager.team;
 
+import com.olekhv.taskmanager.exception.NoPermissionException;
 import com.olekhv.taskmanager.exception.TeamNotFoundException;
 import com.olekhv.taskmanager.exception.UserAlreadyExistsException;
+import com.olekhv.taskmanager.task.Task;
+import com.olekhv.taskmanager.task.TaskProgress;
 import com.olekhv.taskmanager.team.teamJoinRequest.TeamJoinRequest;
 import com.olekhv.taskmanager.team.teamJoinRequest.TeamJoinRequestRepository;
 import com.olekhv.taskmanager.user.Role;
@@ -16,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -47,7 +51,6 @@ class TeamServiceTest {
                 .firstName("Test")
                 .lastName("User")
                 .email("testUser@gmail.com")
-                .role(Role.USER)
                 .build();
 
         team = Team.builder()
@@ -58,14 +61,23 @@ class TeamServiceTest {
                 .admins(new ArrayList<>())
                 .members(new ArrayList<>())
                 .numberOfMembers(1)
+                .tasks(new ArrayList<>())
                 .build();
+
+        team.getMembers().add(user);
+        team.getAdmins().add(user);
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(teamRepository.findByJoinCode("Abc123")).thenReturn(Optional.of(team));
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(team));
+        when(teamRepository.findByTaskId(1L)).thenReturn(Optional.of(team));
     }
 
     @Test
     void should_create_new_team(){
+        team.getMembers().remove(user);
+        team.getAdmins().remove(user);
+
         team.setType(TeamType.PUBLIC);
         teamService.createTeam(team, user.getEmail());
 
@@ -74,6 +86,68 @@ class TeamServiceTest {
         assertEquals(6, team.getJoinCode().length());
         assertEquals(1, team.getMembers().size());
         assertEquals(1, team.getAdmins().size());
+    }
+
+    @Test
+    void should_add_task_for_member(){
+        Task task = Task.builder()
+                .name("TeamTask")
+                .owner(user)
+                .build();
+
+        teamService.addTaskForTeamMember( 1L, task, user.getEmail());
+        verify(teamRepository, times(1)).save(team);
+        assertEquals(1, team.getTasks().size());
+        assertEquals("TeamTask", team.getTasks().get(0).getName());
+        assertEquals(user, team.getTasks().get(0).getOwner());
+    }
+
+    @Test
+    void should_delete_task_from_member(){
+        Task task = Task.builder()
+                .id(1L)
+                .name("TeamTask")
+                .owner(user)
+                .build();
+
+        when(teamRepository.findByTaskId(1L)).thenReturn(Optional.of(team));
+
+        teamService.deleteTaskFromTeamMember(user.getEmail(), task.getId());
+
+        verify(teamRepository, times(1)).save(team);
+        assertEquals(TaskProgress.CLOSED, task.getProgress());
+    }
+
+    @Test
+    void should_throw_exception_if_user_try_to_delete_users_task(){
+        team.getAdmins().remove(user);
+
+        Task task = Task.builder()
+                .id(1L)
+                .name("TeamTask")
+                .build();
+
+        assertThrows(NoPermissionException.class, ()->
+                teamService.deleteTaskFromTeamMember(user.getEmail(), task.getId()));
+    }
+
+    @Test
+    void should_edit_team_information(){
+        team.setType(TeamType.PUBLIC);
+
+        TeamDTO teamDTO = TeamDTO.builder()
+                .name("EditedTeam")
+                .description("Edited")
+                .type(TeamType.PRIVATE)
+                .build();
+
+        teamService.editTeamInformation(1L, teamDTO);
+
+        verify(teamRepository, times(1)).save(team);
+
+        assertEquals("EditedTeam", team.getName());
+        assertEquals("Edited", team.getDescription());
+        assertEquals(TeamType.PRIVATE, team.getType());
     }
 
     @Test
@@ -105,7 +179,6 @@ class TeamServiceTest {
         when(userRepository.findByEmail(secondUser.getEmail())).thenReturn(Optional.of(secondUser));
 
         team.setType(TeamType.PUBLIC);
-        team.getAdmins().add(user);
 
         teamService.joinTeamByCode("Abc123", secondUser.getEmail());
 
@@ -113,7 +186,7 @@ class TeamServiceTest {
 
         assertThat(team.getMembers().contains(secondUser)).isTrue();
         assertEquals(2, team.getNumberOfMembers());
-        assertEquals(1, team.getMembers().size());
+        assertEquals(2, team.getMembers().size());
     }
 
     @Test
@@ -122,7 +195,6 @@ class TeamServiceTest {
                 .firstName("Test")
                 .lastName("SecondUser")
                 .email("testSecondUser@gmail.com")
-                .role(Role.USER)
                 .build();
 
         TeamJoinRequest teamJoinRequest = TeamJoinRequest
@@ -142,15 +214,15 @@ class TeamServiceTest {
 
     @Test
     void should_throw_exception_if_user_already_belongs_to_team_and_try_to_join(){
-        team.getMembers().add(user);
-        teamRepository.save(team);
-
         assertThrows(UserAlreadyExistsException.class, ()->
                 teamService.joinTeamByCode("Abc123", user.getEmail()));
     }
 
     @Test
     void should_throw_exception_if_request_already_exists(){
+        team.getMembers().remove(user);
+        team.getAdmins().remove(user);
+
         TeamJoinRequest teamJoinRequest = TeamJoinRequest
                 .builder()
                 .user(user)
@@ -185,5 +257,116 @@ class TeamServiceTest {
         teamService.deleteTeamJoinRequest(teamJoinRequest.getId());
 
         verify(teamJoinRequestRepository, times(1)).delete(teamJoinRequest);
+    }
+
+    @Test
+    void should_remove_member(){
+        User secondUser = User.builder()
+                .firstName("Test")
+                .lastName("SecondUser")
+                .email("testSecondUser@gmail.com")
+                .build();
+
+        when(userRepository.findByEmail(secondUser.getEmail())).thenReturn(Optional.of(secondUser));
+
+        team.getMembers().add(secondUser);
+
+        teamService.removeTeamMember(secondUser.getEmail(), 1L, user.getEmail());
+    }
+
+    @Test
+    void should_throw_exception_if_try_to_remove_owner(){
+        assertThrows(NoPermissionException.class, () ->
+                teamService.removeTeamMember(user.getEmail(), 1L, user.getEmail())
+        );
+    }
+
+    @Test
+    void should_throw_exception_if_admin_try_to_remove_other_admin(){
+        User teamAdmin = User.builder()
+                .firstName("Test")
+                .lastName("Admin")
+                .email("testAdmin@gmail.com")
+                .build();
+
+        when(userRepository.findByEmail(teamAdmin.getEmail())).thenReturn(Optional.of(teamAdmin));
+
+        team.getMembers().add(teamAdmin);
+        team.getAdmins().add(teamAdmin);
+
+        assertThrows(NoPermissionException.class, () ->
+                teamService.removeTeamMember(teamAdmin.getEmail(), 1L, teamAdmin.getEmail())
+        );
+    }
+
+    @Test
+    void should_throw_exception_if_user_try_to_remove_somebody(){
+        User secondUser = User.builder()
+                .firstName("Test")
+                .lastName("SecondUser")
+                .email("testSecondUser@gmail.com")
+                .build();
+
+        when(userRepository.findByEmail(secondUser.getEmail())).thenReturn(Optional.of(secondUser));
+
+        team.getMembers().add(secondUser);
+
+        assertThrows(NoPermissionException.class, () ->
+                teamService.removeTeamMember(secondUser.getEmail(), 1L, secondUser.getEmail())
+        );
+    }
+
+    @Test
+    void should_change_member_role_to_admin_if_owner(){
+        User secondUser = User.builder()
+                .firstName("Test")
+                .lastName("Second")
+                .email("testSecond@gmail.com")
+                .build();
+
+        when(userRepository.findByEmail(secondUser.getEmail())).thenReturn(Optional.of(secondUser));
+
+        team.getMembers().add(secondUser);
+
+        teamService.changeTeamMemberRole(secondUser.getUsername(), 1L, TeamRole.ADMIN, user.getEmail());
+
+        verify(teamRepository, times(1)).save(team);
+
+        assertThat(team.getAdmins().contains(secondUser)).isTrue();
+    }
+
+    @Test
+    void should_change_member_role_from_admin_to_member(){
+        User secondUser = User.builder()
+                .firstName("Test")
+                .lastName("SecondUser")
+                .email("testSecondUser@gmail.com")
+                .build();
+
+        when(userRepository.findByEmail(secondUser.getEmail())).thenReturn(Optional.of(secondUser));
+
+        team.getMembers().add(secondUser);
+        team.getAdmins().add(secondUser);
+
+        teamService.changeTeamMemberRole(secondUser.getUsername(), 1L, TeamRole.MEMBER, user.getEmail());
+
+        verify(teamRepository, times(1)).save(team);
+
+        assertThat(team.getAdmins().contains(secondUser)).isFalse();
+    }
+
+    @Test
+    void should_list_all_tasks_of_team_member(){
+        Task task = Task.builder()
+                .id(1L)
+                .name("TeamTask")
+                .owner(user)
+                .build();
+
+        team.getTasks().add(task);
+
+        List<Task> tasks = teamService.listAllTasksOfTeamMember(user.getEmail(), 1L);
+
+        assertEquals(1, tasks.size());
     }
 }

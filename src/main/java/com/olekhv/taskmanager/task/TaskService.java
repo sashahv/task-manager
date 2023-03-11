@@ -10,9 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -22,13 +23,13 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
 
-    public void addTaskForSingleUser(String username,
+    public void addTaskForSingleUser(String authUserEmail,
                                      Task task) {
-        User user = userRepository.findByEmail(username).get();
+        User user = userRepository.findByEmail(authUserEmail).get();
 
         task.setOwner(user);
 
-        List<Task> tasks = user.getTasks() != null ? user.getTasks() : new ArrayList<>();
+        List<Task> tasks = user.getTasks();
         tasks.add(task);
         user.setTasks(tasks);
 
@@ -36,14 +37,16 @@ public class TaskService {
         userRepository.save(user);
     }
 
-    public void editTask(Long taskId, Task editedTask, String username) {
+    public void editTask(Long taskId,
+                         Task editedTask,
+                         String authUserEmail) {
         Task task = taskRepository.findById(taskId).orElseThrow(
                 () -> new TaskNotFoundException("Task not found")
         );
 
-        User user = userRepository.findByEmail(username).get();
+        User user = userRepository.findByEmail(authUserEmail).get();
 
-        if (!user.equals(task.getOwner()) && !user.getRole().equals(Role.ADMIN)) {
+        if (!user.equals(task.getOwner()) && !user.getRole().equals(Role.SUPPORT)) {
             throw new TaskNotFoundException("Task not found");
         }
 
@@ -52,61 +55,83 @@ public class TaskService {
         task.setPriority(editedTask.getPriority());
         task.setFromDateTime(editedTask.getFromDateTime());
         task.setToDateTime(editedTask.getToDateTime());
-        task.setPriority(editedTask.getPriority());
-        task.setProgress(editedTask.getProgress());
 
         taskRepository.save(task);
     }
 
-    public void deleteTask(Long taskId, String username) {
+    public void changeTaskProgress(Long taskId,
+                                   TaskProgress taskProgress,
+                                   String authUserEmail) {
         Task task = taskRepository.findById(taskId).orElseThrow(
                 () -> new TaskNotFoundException("Task not found")
         );
 
-        User user = userRepository.findByEmail(username).get();
+        User authUser = userRepository.findByEmail(authUserEmail).get();
 
-        if (!user.equals(task.getOwner()) && !user.getRole().equals(Role.ADMIN)) {
-            throw new TaskNotFoundException("Task not found");
-        }
-
-        List<Task> tasks = user.getTasks();
-        tasks.remove(task);
-
-        taskRepository.deleteById(taskId);
-        userRepository.save(user);
-    }
-
-    /* Allow admin to list all tasks
-    of the specific user */
-    public List<Task> listTasksOfUser(String username, String adminEmail) {
-        User admin = userRepository.findByEmail(adminEmail).get();
-
-        User user = userRepository.findByEmail(username).orElseThrow(
-                () -> new UsernameNotFoundException("User " + username + " not found")
-        );
-
-        if (!admin.getRole().equals(Role.ADMIN)) {
+        if (!task.getOwner().equals(authUser) && !authUser.getRole().equals(Role.SUPPORT)) {
             throw new NoPermissionException("No permission");
         }
 
-        List<Task> tasks = user.getTasks();
+        task.setProgress(taskProgress);
+        taskRepository.save(task);
+    }
+
+    public void deleteTask(Long taskId,
+                           String authUserEmail) {
+        Task task = taskRepository.findById(taskId).orElseThrow(
+                () -> new TaskNotFoundException("Task not found")
+        );
+
+        User authUser = userRepository.findByEmail(authUserEmail).get();
+
+        if (!authUser.equals(task.getOwner()) && !authUser.getRole().equals(Role.SUPPORT)) {
+            throw new TaskNotFoundException("Task not found");
+        }
+
+        List<Task> tasks = authUser.getTasks();
+        tasks.remove(task);
+
+        taskRepository.deleteById(taskId);
+        userRepository.save(authUser);
+    }
+
+    /* Allow supporter to list all
+    tasks of the specific user */
+    public List<Task> listTasksOfSpecificUser(String providedUserEmail,
+                                              String authUserEmail) {
+        User authUser = userRepository.findByEmail(authUserEmail).get();
+
+        User providedUser = userRepository.findByEmail(providedUserEmail).orElseThrow(
+                () -> new UsernameNotFoundException("User " + providedUserEmail + " not found")
+        );
+
+        if (!authUser.getRole().equals(Role.SUPPORT)) {
+            throw new NoPermissionException("No permission");
+        }
+
+        List<Task> tasks = providedUser.getTasks();
+
+        tasks.stream()
+                .filter(task -> task.getToDateTime().isBefore(LocalDateTime.now()) || task.getToDateTime().isEqual(LocalDateTime.now()))
+                .forEach(task -> changeTaskProgress(task.getId(), TaskProgress.OVERDUE, authUserEmail));
+
         sortListOfTasks(tasks);
 
         return tasks;
     }
 
-    /* Allow users to watch all their tasks
-    and admin to watch all existing tasks*/
-    public List<Task> listAllTasks(String username) {
-        User user = userRepository.findByEmail(username).get();
+    /* Allow users
+    to watch all their tasks */
+    public List<Task> listAllTasks(String authUserEmail) {
+        User authUser = userRepository.findByEmail(authUserEmail).get();
 
-        List<Task> tasks;
-        if (user.getRole().equals(Role.ADMIN)) {
-            tasks = taskRepository.findAll();
-        } else {
-            tasks = user.getTasks();
-            sortListOfTasks(tasks);
-        }
+        List<Task> tasks = authUser.getTasks();
+
+        tasks.stream()
+                .filter(task -> task.getToDateTime().isBefore(LocalDateTime.now()) || task.getToDateTime().isEqual(LocalDateTime.now()))
+                .forEach(task -> changeTaskProgress(task.getId(), TaskProgress.OVERDUE, authUserEmail));
+
+        sortListOfTasks(tasks);
 
         return tasks;
     }

@@ -53,6 +53,10 @@ public class PasswordResetTokenService {
     public void recoverPasswordByToken(String newPassword,
                                        String passwordConfirmation,
                                        String token){
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token).orElseThrow(
+                () -> new TokenNotFoundException("Token not found")
+        );
+
         if(!isValidPasswordResetToken(token)){
             throw new TokenNotFoundException("Token is invalid");
         }
@@ -67,6 +71,8 @@ public class PasswordResetTokenService {
                 newPassword,
                 passwordConfirmation,
                 user.getEmail());
+
+        passwordResetTokenRepository.delete(passwordResetToken);
     }
 
     public User fetchUserByResetToken(String token){

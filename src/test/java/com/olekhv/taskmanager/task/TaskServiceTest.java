@@ -11,7 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -40,6 +41,7 @@ class TaskServiceTest {
                 .lastName("User")
                 .email("testUser@gmail.com")
                 .role(Role.USER)
+                .tasks(new ArrayList<>())
                 .build();
 
         task = Task.builder()
@@ -77,6 +79,15 @@ class TaskServiceTest {
     }
 
     @Test
+    void should_change_task_progress(){
+        taskService.changeTaskProgress(task.getId(), TaskProgress.IN_PROCESS, user.getEmail());
+
+        verify(taskRepository, times(1)).save(any(Task.class));
+
+        assertEquals(TaskProgress.IN_PROCESS, task.getProgress());
+    }
+
+    @Test
     void should_delete_task(){
         taskService.addTaskForSingleUser(Objects.requireNonNull(user).getEmail(), task);
 
@@ -90,6 +101,8 @@ class TaskServiceTest {
 
     @Test
     void should_list_all_tasks_for_user_if_role_user(){
+        task.setToDateTime(LocalDateTime.now().plusDays(1));
+
         taskService.addTaskForSingleUser(Objects.requireNonNull(user).getEmail(), task);
 
         verify(taskRepository, times(1)).save(task);
@@ -99,56 +112,40 @@ class TaskServiceTest {
     }
 
     @Test
-    void should_list_tasks_for_all_users_if_role_admin(){
-        Task secondTask = Task.builder()
-                .id(2L)
-                .name("Second task")
-                .owner(user)
-                .build();
+    void should_change_progress_if_task_overdue(){
+        task.setToDateTime(LocalDateTime.now().minusHours(1));
 
-        User admin = User.builder()
-                .firstName("Test")
-                .lastName("Admin")
-                .email("testAdmin@gmail.com")
-                .role(Role.ADMIN)
-                .build();
+        user.getTasks().add(task);
 
-        taskService.addTaskForSingleUser(Objects.requireNonNull(user).getEmail(), task);
-        taskService.addTaskForSingleUser(Objects.requireNonNull(user).getEmail(), secondTask);
+        taskService.listAllTasks(user.getEmail());
 
-        when(userRepository.findByEmail(admin.getEmail())).thenReturn(java.util.Optional.of(admin));
-        when(taskRepository.findAll()).thenReturn(List.of(task, secondTask));
-
-        verify(taskRepository, times(1)).save(task);
-        verify(taskRepository, times(1)).save(secondTask);
-        verify(userRepository, times(2)).save(user);
-
-        assertEquals(2, taskService.listAllTasks(admin.getEmail()).size());
+        assertEquals(TaskProgress.OVERDUE, task.getProgress());
     }
 
     @Test
-    void should_list_tasks_of_certain_user_if_role_admin(){
-        User admin = User.builder()
+    void should_list_tasks_of_certain_user_if_role_support(){
+        User support = User.builder()
                 .firstName("Test")
-                .lastName("Admin")
-                .email("testAdmin@gmail.com")
-                .role(Role.ADMIN)
+                .lastName("Support")
+                .email("testSupport@gmail.com")
+                .role(Role.SUPPORT)
                 .build();
 
+        task.setToDateTime(LocalDateTime.now().plusDays(1));
         taskService.addTaskForSingleUser(Objects.requireNonNull(user).getEmail(), task);
-        when(userRepository.findByEmail(admin.getEmail())).thenReturn(java.util.Optional.of(admin));
+        when(userRepository.findByEmail(support.getEmail())).thenReturn(java.util.Optional.of(support));
 
         verify(taskRepository, times(1)).save(task);
         verify(userRepository, times(1)).save(user);
 
-        assertEquals(1, taskService.listTasksOfUser(user.getEmail(), admin.getEmail()).size());
+        assertEquals(1, taskService.listTasksOfSpecificUser(user.getEmail(), support.getEmail()).size());
     }
 
     @Test
     @DisplayName("Throw exception when try to list other user's tasks")
-    void should_throw_exception_when_list_tasks_of_other_user_without_admin_role(){
+    void should_throw_exception_when_list_tasks_of_other_user_without_support_role(){
         assertThrows(NoPermissionException.class, () ->
-                taskService.listTasksOfUser(user.getEmail(), user.getEmail())
+                taskService.listTasksOfSpecificUser(user.getEmail(), user.getEmail())
         );
     }
 }

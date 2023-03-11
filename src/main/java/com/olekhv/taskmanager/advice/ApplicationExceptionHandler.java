@@ -26,6 +26,7 @@ public class ApplicationExceptionHandler {
     public String handleNonUniqueResultException(NonUniqueResultException ex){
         return ex.getMessage();
     }
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(UserAlreadyExistsException.class)
     public String handleUserAlreadyExistsException(UserAlreadyExistsException ex){

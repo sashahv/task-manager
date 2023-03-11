@@ -3,7 +3,7 @@ package com.olekhv.taskmanager.task;
 public enum TaskProgress {
     TODO("TODO"),
     PLANNING("Planning"),
-    IN_PROGRESS("In progress"),
+    IN_PROCESS("In process"),
     FINISHED("Finished"),
     OVERDUE("Overdue"),
     CLOSED("Closed");
