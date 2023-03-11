@@ -89,14 +89,9 @@ class TaskServiceTest {
 
     @Test
     void should_delete_task(){
-        taskService.addTaskForSingleUser(Objects.requireNonNull(user).getEmail(), task);
+        taskService.deleteTask(1L, user.getEmail());
 
-        verify(taskRepository, times(1)).save(task);
-        verify(userRepository, times(1)).save(user);
-
-        taskService.deleteTask(task.getId(), user.getEmail());
-
-        assertEquals(0, user.getTasks().size());
+        assertEquals(TaskProgress.CLOSED, task.getProgress());
     }
 
     @Test

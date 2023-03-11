@@ -5,6 +5,7 @@ import com.olekhv.taskmanager.exception.TeamNotFoundException;
 import com.olekhv.taskmanager.exception.UserAlreadyExistsException;
 import com.olekhv.taskmanager.task.Task;
 import com.olekhv.taskmanager.task.TaskProgress;
+import com.olekhv.taskmanager.task.TaskRepository;
 import com.olekhv.taskmanager.team.teamJoinRequest.TeamJoinRequest;
 import com.olekhv.taskmanager.team.teamJoinRequest.TeamJoinRequestRepository;
 import com.olekhv.taskmanager.user.Role;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +39,9 @@ class TeamServiceTest {
 
     @MockBean
     private UserRepository userRepository;
+
+    @MockBean
+    private TaskRepository taskRepository;
 
     @MockBean
     private TeamJoinRequestRepository teamJoinRequestRepository;
@@ -110,11 +115,14 @@ class TeamServiceTest {
                 .owner(user)
                 .build();
 
+        team.getTasks().add(task);
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(teamRepository.findByTaskId(1L)).thenReturn(Optional.of(team));
 
-        teamService.deleteTaskFromTeamMember(user.getEmail(), task.getId());
+        teamService.deleteTaskFromTeamMember(user.getEmail(), 1L);
+        verify(taskRepository, times(1)).save(task);
 
-        verify(teamRepository, times(1)).save(team);
         assertEquals(TaskProgress.CLOSED, task.getProgress());
     }
 
@@ -126,6 +134,8 @@ class TeamServiceTest {
                 .id(1L)
                 .name("TeamTask")
                 .build();
+
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
 
         assertThrows(NoPermissionException.class, ()->
                 teamService.deleteTaskFromTeamMember(user.getEmail(), task.getId()));
@@ -361,6 +371,7 @@ class TeamServiceTest {
                 .id(1L)
                 .name("TeamTask")
                 .owner(user)
+                .toDateTime(LocalDateTime.now().plusDays(1))
                 .build();
 
         team.getTasks().add(task);

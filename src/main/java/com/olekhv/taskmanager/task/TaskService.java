@@ -91,8 +91,8 @@ public class TaskService {
         List<Task> tasks = authUser.getTasks();
         tasks.remove(task);
 
-        taskRepository.deleteById(taskId);
-        userRepository.save(authUser);
+        task.setProgress(TaskProgress.CLOSED);
+        taskRepository.save(task);
     }
 
     /* Allow supporter to list all
