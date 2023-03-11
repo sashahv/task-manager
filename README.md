@@ -8,7 +8,7 @@
 - Java 17
 - Spring Boot 3.0.2
 - Spring Security
-- JWT
+- JWT Tokens
 - Maven
 - Hibernate
 - Lombok
@@ -17,7 +17,7 @@
 
 ## Functionality
 ### User Registration and Login
-The authentication is done using JWT tokens, which ensures secure communication between the client and server.\
+The authentication is done using JWT tokens, which ensures secure communication between the client and server.
 - Users can register on the Task Manager application by providing their first name, last name, email and password. 
 - After successful registration, users can log in using their credentials.
 
