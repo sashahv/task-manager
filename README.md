@@ -45,7 +45,7 @@ Once a user is logged in, they can perform the following actions related to task
 To run the Task Manager application, follow these steps:
 1. Clone the repository to your local machine using `git clone https://github.com/sashahv/task-manager.git`.
 2. Navigate to the project directory using `cd task-manager`.
-3. Install the required dependencies `using mvn install`.
+3. Install the required dependencies using `mvn install`.
 4. Start the application using `mvn spring-boot:run`.
 5. The application will be available at `http://localhost:8080`.
 
