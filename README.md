@@ -10,11 +10,11 @@
 - Spring Boot 3.0.2
 - Spring Security
 - Spring Data
-- JWT Tokens
+- JSON Web Tokens (JWT)
 - Maven
 - Hibernate
 - Lombok
-- JUnit
+- JUnit 5
 - Mockito
 
 ## Functionality
