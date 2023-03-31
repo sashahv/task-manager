@@ -1,4 +1,4 @@
-# Task Manager API
+# Task Manager RESTful Spring Application
 
 ## Overview
   Task Manager is a powerful RESTful API that enables developers to build robust task management applications. Built using the Spring Framework, the API provides a wide range of functionalities that allow developers to create user registration and login systems, reset passwords, and manage tasks.  \
