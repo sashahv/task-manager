@@ -9,7 +9,7 @@
 - REST API
 - Spring Boot 3.0.2
 - Spring Security
-- Spring Data
+- Spring Data JPA
 - JSON Web Tokens (JWT)
 - Maven
 - Hibernate
